@@ -1,0 +1,30 @@
+( -------------------------------------- )
+( Runtime Library for FOeRTHchen         )
+( -------------------------------------- )
+( Autor: Helmar Wodtke 2005              )
+( Usage:                                 )
+(       cat runlib.f0 - | ./foerthchen   )
+( or    perl foer.pl runlib.f0 -         )
+( -------------------------------------- )
+: space  32 emit ;
+: cr     10 emit ;
+: E      27 emit 91 emit ;
+: at-xy  E swap (.) 59 emit (.) ." H" ;
+: home   1 1 at-xy ;
+: page   home E ." 2J" ;
+: .      (.) space ;
+: rot    >r swap r> swap ;
+: -rot   rot rot ;
+: over   >r dup r> swap ;
+: tuck   swap over ;
+: nip    swap drop ;
+: not    -1 xor ;
+: negate not 1 + ;
+: -      negate + ;
+: /      /mod drop ;
+: mod    /mod nip ;
+: =0     if( 0 )els( -1 ) ;
+: =      - =0 ;
+: <>     = =0 ;
+: <      swap >if( -1 )els( 0 ) ;
+E ." 0;33;1mlibrary loaded..." E ." 0m"

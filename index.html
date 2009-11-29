@@ -1,0 +1,494 @@
+<html>
+<head>
+<title>FOeRTHchen - The smaller FORTH</title>
+</head>
+<body background="#FFFFFF">
+
+<center>
+<table border="0" width="640"
+style="border-left-width:thin;border-left-style:dashed">
+<tr>
+<td width="154"><img src="foerlogo.gif" width="154" height="61" border="0" alt="" /></td>
+<td valign="bottom" style="border-bottom-width:thin;border-bottom-style:solid">
+  <div style="font-family:Courier;color:#202060;font-size:18pt">
+    FOeRTHchen - The smaller FORTH
+  </div>
+</td>
+<tr>
+<td colspan="2" style="font-family:sans">
+<br />
+<b>Welcome to a small and beautiful computer language!</b>
+<br />
+<br />
+<div style="margin-left:20px">
+  FOeRTHchen is a feature reduced, <i>minimalistic language</i> that claims
+  to be a non-nonsense subset of FORTH. It is known to run on many computing
+  platforms and environments, including very exotic ones. <b>Download</b>
+  the current tarball
+  <a href="http://www.printly.de/HelFORTH/foerthchen-current.tgz">here</a>.<br />
+</div>
+<br />
+<b>JavaScript implementation</b> <font size="-1">(tested with Mozilla,
+Safari, Konqueror, IE6, Opera7)</font>
+<br />
+<br />
+<center><table border="0">
+<tr><td><iframe name="terminal" src="about:blank"
+width="560px" height="250px"
+style="background-color:#E0E0E0;border:none">
+</iframe></td></tr>
+<tr><td>
+<form name="foerthchen" onsubmit="return feval()">
+<span style="font-size:12pt"><input name="input" type="text" size="60" /></span>
+</form>
+</td></tr>
+</table></center>
+
+<form name="files" style="visibility:hidden;display:none">
+<textarea name="runlib" hidden="hidden">
+( -------------------------------------- )
+( Runtime Library for FOeRTHchen         )
+( -------------------------------------- )
+( Autor: Helmar Wodtke 2005              )
+( Usage:                                 )
+(       cat runlib.f0 - | ./foerthchen   )
+( or    perl foer.pl runlib.f0 -         )
+( -------------------------------------- )
+: space  32 emit ;
+: cr     10 emit ;
+: E      27 emit 91 emit ;
+: at-xy  E swap (.) 59 emit (.) ." H" ;
+: home   1 1 at-xy ;
+: page   home E ." 2J" ;
+: .      (.) space ;
+: rot    >r swap r> swap ;
+: -rot   rot rot ;
+: over   >r dup r> swap ;
+: tuck   swap over ;
+: nip    swap drop ;
+: not    -1 xor ;
+: negate not 1 + ;
+: -      negate + ;
+: /      /mod drop ;
+: mod    /mod nip ;
+: =0     if( 0 )els( -1 ) ;
+: =      - =0 ;
+: <>     = =0 ;
+: <      swap >if( -1 )els( 0 ) ;
+E ." 0;33;1mlibrary loaded..." E ." 0m"
+</textarea>
+<textarea name="config">
+<body bgcolor="#8080f0">
+<b>FOeRTHchen terminal configuration</b><br />
+<br />
+<form name="config" onsubmit="return parent.setconf()">
+<div style="font:Courier">
+<center>
+<table border="0" width="95%">
+<tr>
+  <td rowspan="2">
+    <script language="JavaScript">
+      parent.entry("color0");
+      parent.entry("color1");
+      parent.entry("color2");
+      parent.entry("color3");
+      parent.entry("color4");
+      parent.entry("color5");
+      parent.entry("color6");
+      parent.entry("color7");
+    </script>
+  </td>
+  <td valign="top" align="right">
+    <script language="JavaScript">
+      parent.entry("background");
+      parent.entry("foreground");
+//      parent.entry("height");
+    </script>
+  </td>
+</tr>
+<tr>
+  <td valign="bottom" align="right">
+  <input type="checkbox" name="docookie" value="docookie" />save changes
+  <input type="submit" value="apply changes" /></td>
+</tr>
+</table>
+</center>
+</div>
+</form>
+</textarea>
+
+</form>
+
+<script language="JavaScript"><!--
+
+// ============================== //
+//   FOeRTHchen in JavaScript     //
+//   Author: Helmar Wodtke 2005   //
+// ============================== //
+
+var s=new Array, r=new Array, d=new Array, v=new Array;
+var p, a, n, t;
+var sem=0, com=1, str=2;
+
+function pars2(re) {
+  t=a.substr(p,a.length-p);
+  switch(re) {
+    case 0: t.match(/^(([^;]*);)/); break;
+    case 1: t.match(/^([^)]*\))/);  break;
+    case 2: t.match(/^(([^"]*)")/); break;
+  }
+  p+=RegExp.$1.length;
+  return RegExp.$2;
+}
+function parse() {
+  if (!a.substr(p,a.length-p).match(/^(\s*(\S+))/)) return 0;
+  p+=RegExp.$1.length;
+  n=RegExp.$2.substr(0,4);
+  return 1;
+}
+function nxt(aa) {
+  var pm=p,am=a;p=0;a=aa;
+  while(parse())d[n]?eval(d[n]):(n.match(/^\d+/)?s.push(n*1):out=out+"?");
+  p=pm;a=am;
+}
+d["word"]="for(var n in d){out=out+n+' '}";
+d["dup" ]="s.push(s[s.length-1])";
+d["drop"]="s.pop()";
+d["swap"]="t=s[s.length-2];s[s.length-2]=s[s.length-1];s[s.length-1]=t"
+d["(.)" ]="out=out+s.pop()";
+d[":"   ]="parse();d[n]=\"nxt('\"+pars2(sem)+\"')\"";
+d["("   ]=d[")els"]="pars2(com)";
+d["els("]=d[")"   ]=" ";
+d[">r"  ]="r.push(s.pop())";
+d["r>"  ]="s.push(r.pop())";
+d["-1"  ]="s.push(-1)";
+d["*"   ]="n=s.pop();s[s.length-1]*=n";
+d["+"   ]="n=s.pop();s[s.length-1]+=n";
+d["and" ]="n=s.pop();s[s.length-1]&=n";
+d["or"  ]="n=s.pop();s[s.length-1]|=n";
+d["xor" ]="n=s.pop();s[s.length-1]^=n";
+d["/mod"]="n=s[s.length-2];s[s.length-2]=Math.floor(n/s[s.length-1]);s[s.length-1]=n%s[s.length-1]";
+d["if(" ]="if(s.pop()==0)pars2(com)";
+d[">if("]="n=s.pop();if(n>s.pop())pars2(com)";
+d["bye" ]="alert('Bye, bye! I am always here :)')";
+d['."'  ]="p++;out=out+pars2(str)";
+d["emit"]="out=out+String.fromCharCode(s.pop())";
+d["@"   ]="s.push(v[s.pop()])";
+d["!"   ]="t=s.pop();v[t]=s.pop()";
+
+var out="\x1b[2J\x1b[HWelcome to the FOeRTHchen in JavaScript!";
+--></script>
+
+<script language="JavaScript"><!--
+/* ******************************************* *
+ * Terminal emulation for JavaScript           *
+ * =========================================== *
+ * Copyright (c) 2005 by Helmar Wodtke         *
+ * Free for NON-COMMERCIAL USE.                *
+ * This software comes WITHOUT ANY WARRANTIES. *
+ * ******************************************* *
+
+ * ******************************************** *
+ * WITHOUT PERMISSION of the author YOU DO NOT  *
+ *  HAVE THE RIGHT TO USE THIS SOFTWARE WITH    *
+ * PROJECTS that ARE NOT released and PUBLISHED *
+ *          TO THE PUBLIC DOMAIN.               *
+ * ******************************************** */
+
+var colors = new Array("","black","red","green","yellow","blue","magenta","cyan","white");
+var defaultbg = "black", defaultfg = "#00A000";
+var twi = 60;		// width of terminal output
+var tht = 16;		// height of terminal output
+var tvh = 16;		// virtual height of terminal output
+var atv = new Array, att, tou = "", pos = 0;
+function iplain(s) {
+	while (pos>tou.length-1-s.length) {
+		atv[tou.length]=att;
+		tou+=" ";
+	}
+	var q=pos+s.length;
+	if (s!="")
+	  tou=(pos?tou.substr(0,pos):"")+s+tou.substr(q,tou.length-q);
+	while (pos<q) atv[pos++]=att;
+}
+function domctl(s) {
+	var m = s.split(";");
+	for (var i=0; i<m.length; i++) {
+          switch(m[i]*1) {
+            case  0: att=0; break;
+            case  1: att|=1; break;
+            case  4: att|=4; break;
+            case  7: att|=8; break;
+            case 30: att=att&0xF0F|0x010; break;
+            case 31: att=att&0xF0F|0x020; break;
+            case 32: att=att&0xF0F|0x030; break;
+            case 33: att=att&0xF0F|0x040; break;
+            case 34: att=att&0xF0F|0x050; break;
+            case 35: att=att&0xF0F|0x060; break;
+            case 36: att=att&0xF0F|0x070; break;
+            case 37: att=att&0xF0F|0x080; break;
+            case 40: att=att&0x0FF|0x100; break;
+            case 41: att=att&0x0FF|0x200; break;
+            case 42: att=att&0x0FF|0x300; break;
+            case 43: att=att&0x0FF|0x400; break;
+            case 44: att=att&0x0FF|0x500; break;
+            case 45: att=att&0x0FF|0x600; break;
+            case 46: att=att&0x0FF|0x700; break;
+            case 47: att=att&0x0FF|0x800; break;
+          }
+         }
+}
+function hand_esc(s) {
+	if (s.match(/^\x1b\[2J/)) {
+		tou="";atv=new Array;
+		for (var i=0; i<twi*tvh; i++) atv[i]=att,tou+=" ";
+		return 4;
+	}
+	if (s.match(/^\x1b\[H/)) {pos=0;return 3}
+	if (s.match(/^(\x1b\[(\d+);(\d+)H)/)) {
+		var x=RegExp.$2*1-1,y=RegExp.$3*1-1;
+		pos=twi*(tvh-tht+x)+y;
+		return RegExp.$1.length;
+	}
+	if (s.match(/^\x1b\[(\d+(;\d+)*)m/)) {
+		domctl(RegExp.$1); return 3+RegExp.$1.length;
+	}
+	return 1;
+}
+function doctrl(s) {
+  switch(s.charCodeAt(0)) {
+    case  8: if(pos)pos--;			   break;
+    case  9: var p=pos%twi; p+=8-p%8;
+             pos+=p<twi?8-p%8:twi-p; iplain("");   break;
+    case 10: pos=pos-pos%twi+twi;	iplain("");break;
+    case 13: pos=pos-pos%twi;			   break;
+    case 27: return hand_esc(s);
+    default: iplain(" ");			   break;
+  }
+  return 1;
+}
+function quot(s) {
+	s=s.replace(/&/g,"&amp;");
+	s=s.replace(/</g,"&lt;");
+	s=s.replace(/>/g,"&gt;");
+	s=s.replace(/ /g,"&nbsp;");
+	return s;
+}
+function istr(s) {
+	var g=0,l=0;
+	while (g<s.length) {
+		if (s.charCodeAt(g)<32) {
+			iplain(s.substr(l,g-l));
+			l=g=g+doctrl(s.substr(g,20));
+		} else g++;
+	}
+	iplain(s.substr(l,g-l));
+	if (tou.length >= twi*tvh) {
+		var t=tou.length-twi*tvh+twi-1;
+		t-=t%twi;
+		tou=tou.substr(t,tou.length-t);
+		pos-=t;
+		for (var i=0; i<tou.length; i++) atv[i]=atv[t+i];
+		for (var i=tou.length; i<twi*tvh; i++)
+			atv[i]=att,tou+=" ";
+	}
+}
+function attr_on(a) {
+	var r="",bg=defaultbg,fg=defaultfg,needcolor=0;
+	if (a&0x0F0) fg=colors[(a&0x0F0)>>4],needcolor|=1;
+	if (a&0xF00) bg=colors[(a&0xF00)>>8],needcolor|=2;
+	if (a&8) {
+		if (a&0x0F0) fg=colors[(a&0x0F0)>>4];
+		if (a&0xF00) bg=colors[(a&0xF00)>>8];
+		needcolor|=3;a^=10;
+	}
+	if (a&10) {var t=bg;bg=fg;fg=t;needcolor|=3;}
+	if (a&1) r+="<b>";
+	if (a&4) r+="<u>";
+	if (needcolor) {
+          r+="<span style='";
+          if (needcolor&1) r+="color:"+fg+";";
+          if (needcolor&2) r+="background-color:"+bg;
+          r+="'>";
+        }
+	return r;
+}
+function attr_off(a) {
+	var r="";
+	if (a&0xFFA) r+="</span>";
+	if (a&4) r+="</u>";
+	if (a&1) r+="</b>";
+	return r;
+}
+function code_line(n) {
+	var p=n*twi; var a=atv[p],o="",l=0;
+	for (i=1; i<twi; i++) {
+		if (atv[p+i]!=a) {
+			o+=attr_on(a);
+			o+=quot(tou.substr(p+l,i-l));
+			l=i;o+=attr_off(a);a=atv[p+i];
+		}
+	}
+        o+=attr_on(a);
+        o+=quot(tou.substr(p+l,twi-l));
+        o+=attr_off(a);
+	return("<div style='font-size:14px;font-family:Courier'>"+o+"</div>");
+}
+function toutp() {
+	var o="";
+	var m=atv[pos];
+	atv[pos]|=2;
+	for (var i=0; i<tvh; i++) o+=code_line(i)+"\n";
+	atv[pos]=m;
+	return o;
+}
+--></script>
+
+<script language="JavaScript"><!--
+  /*
+   *
+   * Terminal interfacing stuff.
+   *
+   */
+var C,D;
+function view(s) {
+	D=terminal.document;
+	D.close();
+	D.open();
+	D.write(s);
+	D.close();
+}
+function trefresh() {
+	view('<body bgcolor="'+defaultbg+'" text="'+defaultfg+'">'+toutp());
+	terminal.scrollTo(0,terminal.outerHeight-terminal.innerHeight);
+	document.foerthchen.input.focus();
+	return false;
+}
+function feval() {
+	if (document.foerthchen.input.value)
+	  out = out + document.foerthchen.input.value;
+	out = out + "\n";
+	nxt(document.foerthchen.input.value);
+	document.foerthchen.input.value="";
+	istr(out); out="";
+	trefresh();
+	return false;
+}
+function entry(n) {D.writeln(n + " <input type='text' name='"+n+"' /><br />")}
+function viewlib() {
+	view("<body bgcolor='#e0e0e0' text='#000000'><pre>"+quot(document.files.runlib.value)+"</pre>\n");
+}
+function viewconf() {
+	view(document.files.config.value);
+	C=terminal.document.forms.config;
+	C.color0.value=colors[1];C.color1.value=colors[2];
+	C.color2.value=colors[3];C.color3.value=colors[4];
+	C.color4.value=colors[5];C.color5.value=colors[6];
+	C.color6.value=colors[7];C.color7.value=colors[8];
+	C.background.value=defaultbg;
+	C.foreground.value=defaultfg;
+//	C.height.value=tvh;
+}
+function mkcookie() {
+	var co = colors[1]+","+colors[2]+","+colors[3]+","
+	        +colors[4]+","+colors[5]+","+colors[6]+","
+		+colors[7]+","+colors[8]+","+defaultbg+","+defaultfg;
+	var abl=new Date();
+        abl.setTime(abl.getTime()+(100 * 24*60*60*1000));
+	document.cookie="FOeRTHchen="+co+"; expires="+abl.toGMTString();
+}
+function readcookie() {
+	if (!document.cookie) return;
+	if (!document.cookie.match(/FOeRTHchen=([^;]+)/)) return;
+	var c=RegExp.$1.split(",");
+	colors[1]=c[0];colors[2]=c[1];colors[3]=c[2];colors[4]=c[3];
+	colors[5]=c[4];colors[6]=c[5];colors[7]=c[6];	colors[8]=c[7];
+	defaultbg=c[8];defaultfg=c[9];
+}
+function setconf() {
+	C=terminal.document.forms.config;
+	colors[1]=C.color0.value;colors[2]=C.color1.value;
+	colors[3]=C.color2.value;colors[4]=C.color3.value;
+	colors[5]=C.color4.value;colors[6]=C.color5.value;
+	colors[7]=C.color6.value;colors[8]=C.color7.value;
+	defaultbg=C.background.value;
+	defaultfg=C.foreground.value;
+//	tvh=C.height.value;
+	if (C.docookie.checked) mkcookie();
+	trefresh();
+	return false;
+}
+readcookie();
+// if (document.cookie) mkcookie(); // refresh cookie
+feval();
+--></script>
+
+<div style="margin-left:20px">
+  tools:
+  <a href="#" onclick="nxt(document.files.runlib.value);return feval()">load</a>/<a href="#" onclick="viewlib(); return false">view</a> library
+  |
+  <a href="#" onclick="return trefresh()">terminal view</a>
+  |
+  <a href="#" onclick="viewconf(); return false">config</a>
+</div>
+<br />
+<b>Features</b>
+<ul>
+<li> <i>multi way implementation:</i> x86 assembler and a functional similar
+  Perl version. Above you see a JavaScript implementation.</li>
+<li> <i>wordset:</i> <tt>emit (.) bye word : ." dup drop swap &gt;r r&gt; +
+  * /mod and or xor ( if( &gt;if( )els els( ) -1 @ !</tt></li>
+<li> small ELF Linux binary (706 bytes), small Perl-script (755 bytes)</li>
+<li> <i>embeddable:</i> FOeRTHchen can be embedded in <a
+href="http://www.printly.de/HelFORTH/">HelFORTH</a>, <a
+href="http://www.retroforth.org">RetroForth</a>
+  and <a href="http://www.ronware.org/reva.html">Reva</a>.</li>
+<li> <i>self-linking code:</i> the embeddable version links itself in
+  memory. You need to pass two addresses of handling procedures only.</li>
+<li> <i>forward references:</i> you can reference words before they are
+  defined.</li>
+<li> <i>recursion:</i> full support of recursion - in fact this is the way
+  to implement loops in FOeRTHchen.</li>
+<li> <i>free:</i> FOeRTHchen is released to the <i>public domain</i>.
+</ul>
+<br />
+<b>History</b>
+<br />
+<br />
+<div style="margin-left:20px">
+  FOeRTHchen started as a one weekend project to implement an absolutely
+  minimalistic FORTH. Working goal was to find a useful minimal language
+  that is able to define a more specialized language. The first work was
+  done on the assembler version. Soon followed a Perl version. The first
+  JavaScript version and this page was made on the following monday.<br />
+</div>
+<br />
+<b>About the Author</b>
+<br />
+<br />
+<div style="margin-left:20px">
+  I do custom development in Perl and FORTH. Welcome implementation
+  languages are also C, Tcl/Tk and x86 assembler. I'm the author of
+  <a href="http://www.printly.de/HelFORTH/">HelFORTH</a>. I've special
+  skills and experiences in implementing PDF- and prepress-related
+  server software.<br />
+</div>
+<br />
+<font size="-1">
+  <b>Contact:</b> Helmar Wodtke;
+  helmwo&nbsp;at&nbsp;web<b>.</b>de;
+  Hauptstrasse 12, 04683 Belgershain,
+  GERMANY; mobile +49 179 6715898
+</font>
+<br />
+<br />
+<div style="color:#505050">
+  <b>@booksellers: Leave me alone!</b> I'm no publisher.
+</div>
+</td>
+</tr>
+</table>
+</center>
+
+</body>
+</html>
